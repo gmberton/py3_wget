@@ -1,2 +1,2 @@
-# py_wget
+# py3_wget
 A tool like wget for python, supporting a progress bar

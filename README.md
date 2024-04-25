@@ -15,3 +15,6 @@ py3_wget.download_file(
 )
 ```
 
+### TODO list
+- Improve tests
+- Add possibility to resume from partial download

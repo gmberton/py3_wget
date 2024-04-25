@@ -1,0 +1,9 @@
+How to rebuild and upload package:
+
+```
+rm -r build && rm -r dist && rm -r py3_wget.egg-info
+# Update the version
+nano setup.py
+python3 setup.py sdist bdist_wheel
+twine upload dist/* --verbose
+```

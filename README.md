@@ -18,3 +18,4 @@ py3_wget.download_file(
 ### TODO list
 - Improve tests
 - Add possibility to resume from partial download
+- Optionally pass cksum to downloader to ensure file is correctly downloaded

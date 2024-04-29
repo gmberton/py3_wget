@@ -19,3 +19,4 @@ py3_wget.download_file(
 - Improve tests
 - Add possibility to resume from partial download
 - Optionally pass cksum to downloader to ensure file is correctly downloaded
+- Give option to turn off tqdm (silent download)

@@ -20,6 +20,8 @@ tests_url_filename_cksum = [
       "reference_poses_598.zip", 0),
     ("https://zenodo.org/record/1243106/files/Eynsham.zip?download=1",
       "Eynsham.zip?download=1", 0),
+    ("http://www.doc.ic.ac.uk/~ahanda/living_room_traj1_frei_png.tar.gz",
+     "living_room_traj1_frei_png.tar.gz", 0),
     # ("https://www.cs.cornell.edu/projects/megadepth/dataset/MegaDepth_SfM/MegaDepth_SfM_v1.tar.xz",
     #   "MegaDepth_SfM_v1.tar.xz", 0)
 ]

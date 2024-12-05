@@ -1,5 +1,5 @@
-import re
 import os
+import re
 import time
 import shutil
 import hashlib
@@ -50,6 +50,11 @@ def download_file(
     None.
 
     """
+    
+    validate_download_params(
+        url, output_path, overwrite, verbose, cksum, md5, sha256, max_tries, block_size_bytes, retry_seconds, timeout
+    )
+    
     # Is there a cleaner solution to turn off prints?
     if not verbose:
         printf = lambda x: x
@@ -136,3 +141,40 @@ def _download(response, output_path, total_size, partial_filename, verbose, bloc
             file.write(block)
             tqdm_bar.update(len(block))
         tqdm_bar.close()
+
+
+def validate_download_params(url, output_path, overwrite, verbose, cksum, md5, sha256, max_tries, block_size_bytes, retry_seconds, timeout):
+    if not isinstance(url, str) or not url.startswith(("http://", "https://")):
+        raise ValueError("The URL must be a string starting with 'http://' or 'https://'.")
+    
+    if output_path is not None and not isinstance(output_path, str):
+        raise ValueError("The output_path must be a string or None.")
+    
+    if not isinstance(overwrite, bool):
+        raise ValueError("The overwrite parameter must be a boolean.")
+    
+    if not isinstance(verbose, bool):
+        raise ValueError("The verbose parameter must be a boolean.")
+    
+    if cksum is not None and not isinstance(cksum, int):
+        raise ValueError("The cksum parameter must be an integer or None.")
+    
+    if md5 is not None and not re.fullmatch(r"[a-fA-F0-9]{32}", md5):
+        raise ValueError("The md5 parameter must be a 32-character hexadecimal string or None.")
+    
+    if sha256 is not None and not re.fullmatch(r"[a-fA-F0-9]{64}", sha256):
+        raise ValueError("The sha256 parameter must be a 64-character hexadecimal string or None.")
+    
+    if not isinstance(max_tries, int) or max_tries <= 0:
+        raise ValueError("The max_tries parameter must be a positive integer.")
+    
+    if not isinstance(block_size_bytes, int) or block_size_bytes <= 0:
+        raise ValueError("The block_size_bytes parameter must be a positive integer.")
+    
+    if not isinstance(retry_seconds, int) or retry_seconds <= 0:
+        raise ValueError("The retry_seconds parameter must be a positive integer.")
+    
+    if not isinstance(timeout, int) or timeout <= 0:
+        raise ValueError("The timeout parameter must be a positive integer.")
+
+

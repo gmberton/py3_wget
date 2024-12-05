@@ -22,33 +22,41 @@ def download_file(
     retry_seconds=2,
     timeout=60,
 ):
-    """Download a file given its URL. If the download doesn't end well, it will be re-tried.
+    """Download a file from a URL with retry and checksum validation.
 
     Parameters
     ----------
     url : str
-    output_path : str, if the path contains inexistent dirs (e.g. dir/to/file) they will be created.
-        If None it will be derived from URL.
-    overwrite : bool, if to overwrite the file in case it already exists. Default: False.
-    verbose : bool, if True prints statements and show tqdm loop. Default: True.
-    cksum : int, if not None then check that the file cksum corresponds. Raise RuntimeError if it doesn't.
-    md5 : str, if not None then check that the file md5 corresponds. Raise RuntimeError if it doesn't.
-    sha256 : str, if not None then check that the file sha256 corresponds. Raise RuntimeError if it doesn't.
-    max_tries : int, how many time to retry downloading file in case of errors. Default: 5.
-    block_size_bytes : int, block size (in bytes) for downloadng. Default: 8192.
-    retry_seconds : int, how long to wait after each failed download. Wait time is retry_seconds**num_attempt,
-        so keep a small number. Default: 2.
-    timeout : int, timeout for urllib request in seconds. Default: 60.
+        URL of the file to download.
+    output_path : str, optional
+        Path to save the file. If None, it is derived from the URL. Creates directories if needed.
+    overwrite : bool, optional
+        If True, overwrites the file if it exists. Default is False.
+    verbose : bool, optional
+        If True, prints progress and messages. Default is True.
+    cksum : int, optional
+        Expected checksum of the file. If provided, it validates after download.
+    md5 : str, optional
+        Expected MD5 checksum of the file. If provided, it validates after download.
+    sha256 : str, optional
+        Expected SHA256 checksum of the file. If provided, it validates after download.
+    max_tries : int, optional
+        Maximum retry attempts if the download fails. Default is 5.
+    block_size_bytes : int, optional
+        Size of data blocks for download in bytes. Default is 8192.
+    retry_seconds : int, optional
+        Initial retry wait time in seconds. Wait increases exponentially on each failure. Default is 2.
+    timeout : int, optional
+        Timeout for the download request in seconds. Default is 60.
 
     Raises
     ------
     RuntimeError
-        In case of wrong cksum or any download issues.
+        If the download fails after retries or checksum validation fails.
 
     Returns
     -------
-    None.
-
+    None
     """
     
     validate_download_params(
@@ -71,7 +79,7 @@ def download_file(
                     if overwrite:
                         os.remove(output_path)
                     else:
-                        printf(f"File {output_path} already exists, I won't download it again")
+                        printf(f"File '{output_path}' already exists. Skipping download.")
                         return
 
                 total_size = int(headers.get("content-length", 0))  # Total size in bytes
@@ -84,11 +92,11 @@ def download_file(
                 os.remove(partial_filename)
             printf(e)
             printf(
-                f"{num_attempt} / {max_tries}) I'll try again to download {output_path} in {retry_seconds**num_attempt} seconds"
+                f"Attempt {num_attempt + 1}/{max_tries} failed: {e}. Retrying in {retry_seconds**num_attempt} seconds."
             )
             time.sleep(retry_seconds**num_attempt)
     else:
-        raise RuntimeError(f"I tried {max_tries} times and I couldn't download {output_path} from {url}")
+        raise RuntimeError(f"Failed to download '{output_path}' from '{url}' after {max_tries} attempts.")
 
     os.makedirs(os.path.dirname(os.path.abspath(output_path)), exist_ok=True)
     shutil.move(partial_filename, output_path)
@@ -97,21 +105,19 @@ def download_file(
         with open(output_path, "rb") as file:
             computed_cksum = compute_cksum(file)
         if computed_cksum != cksum:
-            raise RuntimeError(f"The cksum for file {output_path} should be {cksum} but it is {computed_cksum}")
+            raise RuntimeError(f"Checksum mismatch for '{output_path}'. Expected: {cksum}, got: {computed_cksum}")
 
     if md5 is not None:
         with open(output_path, "rb") as file:
             computed_md5 = hashlib.md5(file.read()).hexdigest()
         if computed_md5 != md5:
-            raise RuntimeError(f"The MD5 cksum for file {output_path} should be {md5} but it is {computed_md5}")
+            raise RuntimeError(f"MD5 mismatch for '{output_path}'. Expected: {md5}, got: {computed_md5}")
 
     if sha256 is not None:
         with open(output_path, "rb") as file:
             computed_sha256 = hashlib.sha256(file.read()).hexdigest()
         if computed_sha256 != sha256:
-            raise RuntimeError(
-                f"The SHA256 cksum for file {output_path} should be {sha256} but it is {computed_sha256}"
-            )
+            raise RuntimeError(f"SHA256 mismatch for '{output_path}'. Expected: {sha256}, got: {computed_sha256}")
 
 
 def _get_output_path(headers, url, output_path):
@@ -143,7 +149,9 @@ def _download(response, output_path, total_size, partial_filename, verbose, bloc
         tqdm_bar.close()
 
 
-def validate_download_params(url, output_path, overwrite, verbose, cksum, md5, sha256, max_tries, block_size_bytes, retry_seconds, timeout):
+def validate_download_params(
+    url, output_path, overwrite, verbose, cksum, md5, sha256, max_tries, block_size_bytes, retry_seconds, timeout
+):
     if not isinstance(url, str) or not url.startswith(("http://", "https://")):
         raise ValueError("The URL must be a string starting with 'http://' or 'https://'.")
     

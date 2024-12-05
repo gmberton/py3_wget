@@ -7,7 +7,7 @@ here = os.path.abspath(os.path.dirname(__file__))
 with codecs.open(os.path.join(here, "README.md"), encoding="utf-8") as fh:
     long_description = "\n" + fh.read()
 
-VERSION = "1.0.2"
+VERSION = "1.0.3"
 DESCRIPTION = "A tool to download files. It supports progress bar, cksum, timeout, retry failed download."
 
 # Setting up

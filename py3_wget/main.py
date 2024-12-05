@@ -3,6 +3,7 @@ import re
 import os
 import time
 import shutil
+import hashlib
 from tqdm import tqdm
 from urllib.request import urlopen
 
@@ -10,6 +11,7 @@ from .cksum import compute_cksum
 
 
 def download_file(url, output_path=None, overwrite=False, verbose=True, cksum=None,
+                  md5=None, sha256=None,
                   max_tries=5, block_size_bytes=8192, retry_seconds=2, timeout=60):
     """Download a file given its URL. If the download doesn't end well, it will be re-tried.
 
@@ -21,6 +23,8 @@ def download_file(url, output_path=None, overwrite=False, verbose=True, cksum=No
     overwrite : bool, if to overwrite the file in case it already exists. Default: False.
     verbose : bool, if True prints statements and show tqdm loop. Default: True.
     cksum : int, if not None then check that the file cksum corresponds. Raise RuntimeError if it doesn't.
+    md5 : str, if not None then check that the file md5 corresponds. Raise RuntimeError if it doesn't.
+    sha256 : str, if not None then check that the file sha256 corresponds. Raise RuntimeError if it doesn't.
     max_tries : int, how many time to retry downloading file in case of errors. Default: 5.
     block_size_bytes : int, block size (in bytes) for downloadng. Default: 8192.
     retry_seconds : int, how long to wait after each failed download. Wait time is retry_seconds**num_attempt,
@@ -78,6 +82,18 @@ def download_file(url, output_path=None, overwrite=False, verbose=True, cksum=No
             computed_cksum = compute_cksum(file)
         if computed_cksum != cksum:
             raise RuntimeError(f"The cksum for file {output_path} should be {cksum} but it is {computed_cksum}")
+    
+    if md5 is not None:
+        with open(output_path, "rb") as file:
+            computed_md5 = hashlib.md5(file.read()).hexdigest()
+        if computed_md5 != md5:
+            raise RuntimeError(f"The MD5 cksum for file {output_path} should be {md5} but it is {computed_md5}")
+    
+    if sha256 is not None:
+        with open(output_path, "rb") as file:
+            computed_sha256 = hashlib.sha256(file.read()).hexdigest()
+        if computed_sha256 != sha256:
+            raise RuntimeError(f"The SHA256 cksum for file {output_path} should be {sha256} but it is {computed_sha256}")
 
 
 def _get_output_path(headers, url, output_path):

@@ -1,4 +1,3 @@
-
 import re
 import os
 import time
@@ -10,9 +9,19 @@ from urllib.request import urlopen
 from .cksum import compute_cksum
 
 
-def download_file(url, output_path=None, overwrite=False, verbose=True, cksum=None,
-                  md5=None, sha256=None,
-                  max_tries=5, block_size_bytes=8192, retry_seconds=2, timeout=60):
+def download_file(
+    url,
+    output_path=None,
+    overwrite=False,
+    verbose=True,
+    cksum=None,
+    md5=None,
+    sha256=None,
+    max_tries=5,
+    block_size_bytes=8192,
+    retry_seconds=2,
+    timeout=60,
+):
     """Download a file given its URL. If the download doesn't end well, it will be re-tried.
 
     Parameters
@@ -46,64 +55,68 @@ def download_file(url, output_path=None, overwrite=False, verbose=True, cksum=No
         printf = lambda x: x
     else:
         printf = print
-    
+
     for num_attempt in range(max_tries):  # In case of errors, re-try up to 'max_tries' times
         try:
             with urlopen(url, timeout=timeout) as response:
                 headers = response.headers
                 output_path, partial_filename = _get_output_path(headers, url, output_path)
-                
+
                 if os.path.exists(output_path):
                     if overwrite:
                         os.remove(output_path)
                     else:
                         printf(f"File {output_path} already exists, I won't download it again")
                         return
-                
-                total_size = int(headers.get('content-length', 0))  # Total size in bytes
+
+                total_size = int(headers.get("content-length", 0))  # Total size in bytes
                 _download(response, output_path, total_size, partial_filename, verbose, block_size_bytes)
             break
-        
+
         except (Exception, RuntimeError, OSError) as e:
             # Timeout error is raised as OSError
             if "partial_filename" in locals() and os.path.exists(partial_filename):
                 os.remove(partial_filename)
             printf(e)
-            printf(f"{num_attempt} / {max_tries}) I'll try again to download {output_path} in {retry_seconds**num_attempt} seconds")
+            printf(
+                f"{num_attempt} / {max_tries}) I'll try again to download {output_path} in {retry_seconds**num_attempt} seconds"
+            )
             time.sleep(retry_seconds**num_attempt)
     else:
         raise RuntimeError(f"I tried {max_tries} times and I couldn't download {output_path} from {url}")
-    
+
     os.makedirs(os.path.dirname(os.path.abspath(output_path)), exist_ok=True)
     shutil.move(partial_filename, output_path)
-    
+
     if cksum is not None:
         with open(output_path, "rb") as file:
             computed_cksum = compute_cksum(file)
         if computed_cksum != cksum:
             raise RuntimeError(f"The cksum for file {output_path} should be {cksum} but it is {computed_cksum}")
-    
+
     if md5 is not None:
         with open(output_path, "rb") as file:
             computed_md5 = hashlib.md5(file.read()).hexdigest()
         if computed_md5 != md5:
             raise RuntimeError(f"The MD5 cksum for file {output_path} should be {md5} but it is {computed_md5}")
-    
+
     if sha256 is not None:
         with open(output_path, "rb") as file:
             computed_sha256 = hashlib.sha256(file.read()).hexdigest()
         if computed_sha256 != sha256:
-            raise RuntimeError(f"The SHA256 cksum for file {output_path} should be {sha256} but it is {computed_sha256}")
+            raise RuntimeError(
+                f"The SHA256 cksum for file {output_path} should be {sha256} but it is {computed_sha256}"
+            )
 
 
 def _get_output_path(headers, url, output_path):
     if output_path is None:
-        if 'content-disposition' not in headers:
+        if "content-disposition" not in headers:
             output_path = os.path.basename(url)
-        elif len(re.findall("filename=\"(.+)\"", headers['content-disposition'])) != 0:
-            output_path = re.findall("filename=\"(.+)\"", headers['content-disposition'])[0]
-        elif len(headers['content-disposition'].split("filename=")) != 0:
-            output_path = headers['content-disposition'].split("filename=")[1]
+        elif len(re.findall('filename="(.+)"', headers["content-disposition"])) != 0:
+            output_path = re.findall('filename="(.+)"', headers["content-disposition"])[0]
+        elif len(headers["content-disposition"].split("filename=")) != 0:
+            output_path = headers["content-disposition"].split("filename=")[1]
         else:
             output_path = "unknown_filename"
     output_filename = os.path.basename(output_path)
@@ -112,8 +125,10 @@ def _get_output_path(headers, url, output_path):
 
 
 def _download(response, output_path, total_size, partial_filename, verbose, block_size_bytes):
-    tqdm_bar = tqdm(total=total_size, desc=os.path.basename(output_path), unit='iB', unit_scale=True, disable=not verbose)
-    with open(partial_filename, 'wb') as file:
+    tqdm_bar = tqdm(
+        total=total_size, desc=os.path.basename(output_path), unit="iB", unit_scale=True, disable=not verbose
+    )
+    with open(partial_filename, "wb") as file:
         while True:
             block = response.read(block_size_bytes)
             if not block:

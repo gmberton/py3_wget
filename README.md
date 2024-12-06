@@ -23,6 +23,7 @@ pip install py3_wget
 ```
 
 ## Parameters
+```
 py3_wget.download_file(
     url,
     output_path=None,
@@ -36,6 +37,7 @@ py3_wget.download_file(
     retry_seconds=2,
     timeout_seconds=60,
 )
+```
 
 ### TODO list
 - [ ] Optionally resume from partial download

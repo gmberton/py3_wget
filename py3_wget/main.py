@@ -20,7 +20,7 @@ def download_file(
     max_tries=5,
     block_size_bytes=8192,
     retry_seconds=2,
-    timeout=60,
+    timeout_seconds=60,
 ):
     """Download a file from a URL with retry and checksum validation.
 
@@ -46,7 +46,7 @@ def download_file(
         Size of data blocks for download in bytes. Default is 8192.
     retry_seconds : int, optional
         Initial retry wait time in seconds. Wait increases exponentially on each failure. Default is 2.
-    timeout : int, optional
+    timeout_seconds : int, optional
         Timeout for the download request in seconds. Default is 60.
 
     Raises
@@ -60,7 +60,7 @@ def download_file(
     """
 
     validate_download_params(
-        url, output_path, overwrite, verbose, cksum, md5, sha256, max_tries, block_size_bytes, retry_seconds, timeout
+        url, output_path, overwrite, verbose, cksum, md5, sha256, max_tries, block_size_bytes, retry_seconds, timeout_seconds
     )
 
     # Is there a cleaner solution to turn off prints?
@@ -71,7 +71,7 @@ def download_file(
 
     for num_attempt in range(max_tries):  # In case of errors, re-try up to 'max_tries' times
         try:
-            with urlopen(url, timeout=timeout) as response:
+            with urlopen(url, timeout=timeout_seconds) as response:
                 headers = response.headers
                 output_path, partial_filename = _get_output_path(headers, url, output_path)
 
@@ -154,7 +154,7 @@ def validate_cksums(output_path, cksum, md5, sha256):
 
 
 def validate_download_params(
-    url, output_path, overwrite, verbose, cksum, md5, sha256, max_tries, block_size_bytes, retry_seconds, timeout
+    url, output_path, overwrite, verbose, cksum, md5, sha256, max_tries, block_size_bytes, retry_seconds, timeout_seconds
 ):
     if not isinstance(url, str) or not url.startswith(("http://", "https://")):
         raise ValueError("The URL must be a string starting with 'http://' or 'https://'.")
@@ -186,5 +186,5 @@ def validate_download_params(
     if not isinstance(retry_seconds, int) or retry_seconds <= 0:
         raise ValueError("The retry_seconds parameter must be a positive integer.")
 
-    if not isinstance(timeout, int) or timeout <= 0:
-        raise ValueError("The timeout parameter must be a positive integer.")
+    if not isinstance(timeout_seconds, int) or timeout_seconds <= 0:
+        raise ValueError("The timeout_seconds parameter must be a positive integer.")

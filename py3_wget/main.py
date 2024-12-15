@@ -4,6 +4,7 @@ import time
 import shutil
 import hashlib
 from tqdm import tqdm
+from pathlib import Path
 from urllib.request import urlopen
 
 from .cksum import compute_cksum
@@ -28,7 +29,7 @@ def download_file(
     ----------
     url : str
         URL of the file to download.
-    output_path : str, optional
+    output_path : str or Path, optional
         Path to save the file. If None, it is derived from the URL. Creates directories if needed.
     overwrite : bool, optional
         If True, overwrites the file if it exists. Default is False.
@@ -159,8 +160,8 @@ def validate_download_params(
     if not isinstance(url, str) or not url.startswith(("http://", "https://")):
         raise ValueError("The URL must be a string starting with 'http://' or 'https://'.")
 
-    if output_path is not None and not isinstance(output_path, str):
-        raise ValueError("The output_path must be a string or None.")
+    if output_path is not None and not isinstance(output_path, str) and not isinstance(output_path, Path):
+        raise ValueError("The output_path must be a string,  None.")
 
     if not isinstance(overwrite, bool):
         raise ValueError("The overwrite parameter must be a boolean.")
